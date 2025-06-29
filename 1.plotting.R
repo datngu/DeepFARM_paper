@@ -13,9 +13,6 @@ df$LR = factor(df$LR, levels = c("1e-03", "5e-04", "1e-04", "5e-05"))
 
 
 
-
-## supplement figures
-
 ## AUROC
 auroc = ggplot(df, aes(x = LR, y = auroc, fill = Method)) +
   geom_boxplot() +
@@ -41,42 +38,60 @@ wide_median_table_auroc <- median_table_auroc %>%
 
 
 # Optionally save the table to a CSV file
-write.csv(wide_median_table_auroc, "out_tables/Sup_Tab1_median_auroc.csv", row.names = FALSE)
+write.csv(wide_median_table_auroc, "out_tables_R1/Sup_Tab1_median_auroc.csv", row.names = FALSE)
 
 
+pdf("out_figs_R1/Fig2.pdf", width = 8, height = 5.5)
+auroc
+dev.off()
 
-best_lr <- median_table_auroc %>% 
+
+## AUPR
+aupr = ggplot(df, aes(x = LR, y = aupr, fill = Method)) +
+  geom_boxplot() +
+  facet_wrap(~Spec) +
+  theme_light() +
+  labs(x = "Learning Rate",
+       y = "AUPR") +
+  scale_y_continuous() +
+  scale_fill_brewer(palette = "Set2")
+
+# Compute the median values
+median_table_aupr <- df %>%
+  group_by(LR, Method, Spec) %>%
+  summarize(Median_AUPR = median(aupr, na.rm = TRUE)) %>%
+  arrange(LR, Spec, Method)
+
+# Display the table
+print(median_table_aupr)
+
+
+wide_median_table_aupr <- median_table_aupr %>%
+  pivot_wider(names_from = Method, values_from = Median_AUPR) %>% arrange(Spec)
+
+
+# Optionally save the table to a CSV file
+write.csv(wide_median_table_aupr, "out_tables_R1/Sup_Tab2_median_aupr.csv", row.names = FALSE)
+
+
+### export figs
+
+pdf("out_figs_R1/Sup_Fig1.pdf", width = 8, height = 5.5)
+aupr
+dev.off()
+
+## Export best learning rates for DanQ
+combine_tab = median_table_auroc
+combine_tab$Median_AUPR = median_table_aupr$Median_AUPR
+
+best_lr <- combine_tab %>% 
   filter(Method == "DanQ") %>%
   group_by(Spec) %>%
   filter(Median_AUROC == max(Median_AUROC)) %>%
   arrange(Spec)
 
 
-write.csv(best_lr, "out_tables/Sup_Tab2_best_LR_DanQ.csv", row.names = FALSE)
-
-
-### export figs
-
-
-pdf("out_figs/Fig2.pdf", width = 8, height = 5.5)
-auroc
-dev.off()
-
-
-
-
-# ### DanQ performance
-# pick = df$Method == 'DanQ'
-# f1 = ggplot(df[pick,], aes(x = auroc, y = LR, fill = LR)) +
-#   geom_violin(trim=FALSE) +
-#   geom_boxplot(width=0.2, fill="white")+
-#   facet_wrap(~Spec) +
-#   theme_light() +
-#   labs(y = "Learning Rate",
-#        x = "AUROC") +
-#   scale_x_continuous(limits = c(0.5, 1)) +
-#   scale_fill_brewer(palette = "Set2") +
-#   theme(legend.position = "none")
+write.csv(best_lr, "out_tables_R1/Sup_Tab3_best_LR_DanQ.csv", row.names = FALSE)
 
 
 
@@ -106,14 +121,30 @@ f2 = ggplot(df_best, aes(y = Type, x = auroc, fill = Type)) +
   theme(legend.position = "none")
 
 
-## export figures
 
-# pdf("out_figs/Sup_Fig1.pdf", width = 8, height = 5.5)
-# f1
-# dev.off()
-
-pdf("out_figs/Sup_Fig1.pdf", width = 8, height = 5.5)
+pdf("out_figs_R1/Sup_Fig2.pdf", width = 8, height = 5.5)
 f2
 dev.off()
+
+
+
+# ### AUPR by track types
+
+# f3 = ggplot(df_best, aes(y = Type, x = aupr, fill = Type)) +
+#   geom_violin(trim=FALSE) +
+#   geom_boxplot(width=0.2, fill="white")+
+#   facet_wrap(~Spec) +
+#   theme_light() +
+#   labs(x = "AUPR",
+#        y = "Data type") +
+#   scale_x_continuous() +
+#   scale_fill_brewer(palette = "Set2") +
+#   theme(legend.position = "none")
+
+
+
+# pdf("out_figs_R1/Sup_Fig3.pdf", width = 8, height = 5.5)
+# f3
+# dev.off()
 
 
